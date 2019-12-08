@@ -35,14 +35,22 @@ while (1):
         nivel = float(valores[1])
         valorVin = float(valores[2])
         valorVout = float(valores[3])
-        
+        led = bool(valores[4])
+        buzzer = bool(valores[5])
+        canoIn = bool(valores[6])
+        canoOut = bool(valores[7])
+
         if not c.is_open():
             if not c.open():
                 print("unable to connect to "+SERVER_HOST+":"+str(SERVER_PORT))
         if c.is_open():
-            c.write_float(0, [nivel])
-            c.write_float(1, [valorVin])
-            c.write_float(2, [valorVout])    
+            c.write_float(0, [valorVin])
+            c.write_float(1, [valorVout])
+            c.write_float(2, [nivel])
+            c.write_single_coil(3, [canoIn])
+            c.write_single_coil(4, [canoOut])
+            c.write_single_coil(5,[led])
+            c.write_single_coil(6,[buzzer]) 
     except:
         pass
     

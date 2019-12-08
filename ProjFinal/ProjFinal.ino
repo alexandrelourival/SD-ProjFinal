@@ -68,7 +68,6 @@ uint16_t myAnalogRead(uint8_t ch)
 }
 
 bool Beep = false;
-int timeSleep = 0;
 
 int main() {
   mySerialBegin(9600);
@@ -91,11 +90,8 @@ int main() {
   TCCR1B = _BV(WGM12) | _BV(CS10) | _BV(CS12); // modo CTC, prescaler 1024
   TIMSK1 = _BV(OCIE1A);
 
-  //SET PWM
-  TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
-  TCCR2B = _BV(CS21);
-
   float va1, va2, valorVin, valorVout, nivel = 50.0, soma, decNivel, decValorVin, decValorVout;
+  bool bled, bbuzzer, bCanoIn, bCanoOut;
   char result[100];
 
   while (1) {
@@ -115,9 +111,13 @@ int main() {
         nivel = nivel + valorVin - valorVout;
       }
     }
+    bCanoIn = (valorVin > 0) ? 1 : 0;
+    bCanoOut = (valorVout > 0) ? 1 : 0;
+    bled = ((nivel==100) ? 1 : ((Beep & (nivel>80) & (nivel<100)) ? 1 : 0));
+    bbuzzer = ((nivel==100) ? 1 : ((Beep & (nivel>80)) ? 1 : 0));
 
-    myDigitalWrite(PORTD, led, ((nivel==100) ? 1 : ((Beep & (nivel>80) & (nivel<100)) ? 1 : 0)));
-    OCR2A = (nivel==100) ? 200 : ((Beep & (nivel>80)) ? 200 : 0);
+    myDigitalWrite(PORTD, led, bled);
+    OCR2A = ((bbuzzer) ? 200 : 0);
     
     decNivel = nivel*100;
     decNivel = int(decNivel) - (int(nivel)*100);
@@ -128,17 +128,12 @@ int main() {
     decValorVout = valorVout*100;
     decValorVout = int(decValorVout) - (int(valorVout)*100);
     
-    sprintf(result, "/%d.%02d/%d.%02d/%d.%02d/\n", (int)nivel, (int)decNivel, (int)valorVin, (int)decValorVin, (int)valorVout, (int)decValorVout);
+    sprintf(result, "/%d.%02d/%d.%02d/%d.%02d/%d/%d/\n", (int)nivel, (int)decNivel, (int)valorVin, (int)decValorVin, (int)valorVout, (int)decValorVout, (int)bled, (int)bbuzzer, (int)bCanoIn, (int)bCanoOut);
     mySerialPrint(result);
-    //delay(1000);
   }
-  /*timeSleep = 0;
-  while(timeSleep < 5);*/
-
 }
 
 ISR(TIMER1_COMPA_vect)
 {
   Beep = !Beep;
-  timeSleep++;
 }
